@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "fomo-bot"
+version = "0.1.0"
+description = "A Discord bot that scans pinned messages for FOMO keyword"
+authors = ["Clooooode <clode@clo5de.info>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.13"
+"discord.py" = "2.3.2"
+python-dotenv = "1.0.0"
+audioop-lts = "^0.2.1"
+
+[tool.poetry.group.dev.dependencies]
+poetry-plugin-export = "^1.9.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api" 
