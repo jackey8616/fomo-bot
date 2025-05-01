@@ -1,3 +1,4 @@
+from typing import Optional
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
@@ -14,15 +15,15 @@ class GoogleVertexService:
     def chat(
         self,
         model_name: str,
-        system_instructions: list[str],
         content: str,
+        system_instructions: Optional[list[str]] = None,
     ) -> str:
         model = GenerativeModel(
             model_name=model_name,
             system_instruction=[
                 Part.from_text(instruction)
                 for instruction in system_instructions
-            ],
+            ] if system_instructions else None,
         )
         history = []
         chat_instance = model.start_chat(history=history)
