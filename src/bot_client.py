@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from discord import Forbidden, TextChannel, Message, User, Embed, Color, utils
 from discord.ext import commands
 
