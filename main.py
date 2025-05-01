@@ -1,10 +1,11 @@
+from kink import di
+from bootstrap import bootstrap
+
 from discord import Intents
-from os import getenv
-from dotenv import load_dotenv
 from bot_client import BotClient
 
 # Load environment variables
-load_dotenv(override=True)
+bootstrap()
 
 # Bot setup
 intents = Intents.default()
@@ -15,7 +16,5 @@ intents.reactions = True  # Enable reaction intents
 client = BotClient(command_prefix='!', intents=intents)
 
 # Run the bot
-token = getenv('DISCORD_TOKEN')
-if token is None:
-    raise ValueError("DISCORD_TOKEN environment variable is not set")
+token = di['DISCORD_TOKEN']
 client.run(token)

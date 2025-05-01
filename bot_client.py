@@ -2,14 +2,15 @@ from dataclasses import dataclass, field
 from discord import Forbidden, TextChannel, Message, User, Embed, Color, utils
 from discord.ext import commands
 
+from google_vertex import GoogleVertexService
+from summarize import summarize
 
 @dataclass
 class BotClient(commands.Bot):
-    channel_whitelist: list[tuple[int, list[User]]] = field(default_factory=list)
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.channel_whitelist = []
+        self.channel_whitelist: list[tuple[int, list[User]]] = []
+        self.google_vertex_service = GoogleVertexService()
         
     async def setup_hook(self):
         await self.add_cog(CommandsCog(self))
@@ -57,8 +58,15 @@ class BotClient(commands.Bot):
             if len(message.content) == 0 or message.author.id not in user_ids:
                 continue
             messages.append((message.author, message.content))
+        messages.reverse()
         return messages
 
+    async def summarize_messages(self, messages: list[tuple[User, str]]):
+        system_instructions, user_instructions = summarize(messages)
+        return self.google_vertex_service.chat(
+            model_name="gemini-2.0-flash-001",
+            system_instructions=system_instructions,
+            content=user_instructions)
 
 class CommandsCog(commands.Cog):
     def __init__(self, bot: BotClient):
@@ -102,3 +110,15 @@ class CommandsCog(commands.Cog):
         embed.timestamp = utils.utcnow()
         
         await ctx.send(embed=embed)
+
+    @commands.command(name='summarize')
+    async def summarize(self, ctx):
+        """Summarizes the messages from whitelisted users"""
+        if not self.bot.channel_whitelist:
+            await ctx.send("No whitelisted messages found!")
+            return
+
+        user_ids = set([user.id for user in self.bot.channel_whitelist[0][1]])
+        messages = await self.bot.get_messages_base_on_whitelist(self.bot.channel_whitelist[0][0], user_ids)
+        summary = await self.bot.summarize_messages(messages)
+        await ctx.send(summary)
