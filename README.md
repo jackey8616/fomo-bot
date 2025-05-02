@@ -5,8 +5,8 @@ A Discord bot that monitors whitelisted messages in channels and provides summar
 ## Features
 
 - Multiple user tracking strategies:
+  - Role-based tracking: Tracks users with the "FomoTrack" role across the guild
   - Pinned message tracking: Scans pinned messages for "FomoBot TrackList" keyword and tracks users who react with ✅
-  - Role-based tracking: Tracks users with specific roles across the guild
 - Provides two summarization modes:
   - Casual summarization (`!casual_summarize`) - Quick, concise summary of recent messages
   - Serious summarization (`!serious_summarize`) - Detailed, structured summary with key learnings, shared resources, help exchanges, and project updates
@@ -43,18 +43,18 @@ poetry run python src/main.py
 
 ### Setting Up User Tracking
 
+#### Role-Based Tracking
+The bot tracks users with the "FomoTrack" role by default. Users with this role will be monitored in all channels.
+
 #### Pinned Message Tracking
 1. Create a pinned message in a channel with the content containing "FomoBot TrackList"
 2. React to this message with a ✅ emoji
 3. Any users who add a ✅ reaction to this message will be tracked
 
-#### Role-Based Tracking
-The bot can be configured to track users with specific roles. Currently, it's set to track users with the "AAA" role.
-
 ### Bot Commands
 
-- `!casual_summarize` - Generates a concise summary of the conversation in a casual format
-- `!serious_summarize` - Generates a detailed, structured summary of the conversation including key learnings, shared resources, help exchanges, and project updates
+- `!casual_summarize [channel]` - Generates a concise summary of the conversation in a casual format. Optionally specify a channel to summarize.
+- `!serious_summarize [channel]` - Generates a detailed, structured summary of the conversation including key learnings, shared resources, help exchanges, and project updates. Optionally specify a channel to summarize.
 
 ## Google Vertex AI Integration
 
@@ -63,6 +63,8 @@ The bot uses Google's Vertex AI API with Gemini models for text summarization. K
 - Uses the `gemini-2.0-flash-001` model for efficient processing
 - Implements different summarization strategies for different use cases
 - Maintains message context and conversation flow in summaries
+- Converts message timestamps to Asia/Taipei timezone (UTC+8)
+- Includes links to original messages in serious summaries
 
 ## Bot Permissions
 
@@ -80,15 +82,16 @@ The project uses:
 - Python 3.13
 - discord.py 2.3.2
 - Kink for dependency injection
-- Google Cloud AI Platform
+- Google Cloud Vertex AI
 - Poetry for dependency management
 
 ### Key Components
 
-- `bot_client.py` - Main Discord bot implementation
+- `bot_client.py` - Main Discord bot implementation with command handling
 - `user_tracking/` - Strategies for tracking users in channels
   - `pinned_message_emoji_tracker.py` - Tracks users via pinned message reactions
   - `role_based_tracker.py` - Tracks users based on their roles
+  - `user_tracking_manager.py` - Manages multiple tracking strategies
 - `summarize.py` - Provides different summarization strategies
 - `google_vertex.py` - Integration with Google Vertex AI
 
