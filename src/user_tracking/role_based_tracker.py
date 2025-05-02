@@ -1,7 +1,7 @@
 from typing import List, Tuple, Union
 from discord import User, Member, Guild, TextChannel
 
-from .tracking_strategy import UserTrackingStrategy
+from .user_tracking_strategy import UserTrackingStrategy
 
 
 class RoleBasedTracker(UserTrackingStrategy):

@@ -1,8 +1,8 @@
 from typing import List, Tuple, Optional, Union, Set, Dict
 from collections import defaultdict
-from discord import Message, User, Member, Guild, TextChannel
+from discord import User, Member, Guild, TextChannel
 
-from .tracking_strategy import UserTrackingStrategy
+from .user_tracking_strategy import UserTrackingStrategy
 
 
 class UserTrackingManager:

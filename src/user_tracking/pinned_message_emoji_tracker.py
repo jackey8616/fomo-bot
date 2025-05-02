@@ -1,13 +1,13 @@
 from typing import List, Tuple, Union
 from discord import User, Member, Guild, TextChannel, Forbidden
 
-from .tracking_strategy import UserTrackingStrategy
+from .user_tracking_strategy import UserTrackingStrategy
 
 
-class WhitelistEmojiTracker(UserTrackingStrategy):
+class PinnedMessageEmojiTracker(UserTrackingStrategy):
     """Strategy for tracking users who reacted with a specific emoji to a whitelist message"""
     
-    def __init__(self, whitelist_keyword: str = "FomoBot Whitelist", emoji: str = "✅"):
+    def __init__(self, whitelist_keyword: str = "FomoBot TrackList", emoji: str = "✅"):
         self.whitelist_keyword = whitelist_keyword
         self.emoji = emoji
     
