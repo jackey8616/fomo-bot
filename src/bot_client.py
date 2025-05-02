@@ -1,13 +1,14 @@
 from dataclasses import dataclass
 from typing import List, Union
 
-from discord import Color, Embed, Member, Message, User
+import pytz
+from discord import Member, Message, User
 from discord.abc import Messageable
 from discord.ext.commands import Bot, Cog, command
 from discord.ext.commands.context import Context
 
 from google_vertex import GoogleVertexService
-from summarize import casual_summarize, serious_summarize
+from summarize import casual_summarize, serious_summarize_with_link
 from user_tracking import RoleBasedTracker, UserTrackingManager
 
 
@@ -58,7 +59,7 @@ class BotClient(Bot):
         assert isinstance(channel, Messageable)
 
         messages = []
-        async for message in channel.history(limit=100):
+        async for message in channel.history(limit=300):
             assert isinstance(message, Message)
             if len(message.content) == 0 or message.author.id not in user_ids:
                 continue
@@ -75,12 +76,19 @@ class BotClient(Bot):
         )
 
     async def serious_summarize_messages(self, messages: list[Message]):
-        system_instructions, user_instructions = serious_summarize(messages)
-        return self.google_vertex_service.chat(
+        system_instructions, user_instructions = serious_summarize_with_link(messages)
+        output = self.google_vertex_service.chat(
             model_name="gemini-2.0-flash-001",
             content=user_instructions,
             system_instructions=system_instructions,
         )
+
+        for each in messages:
+            in_output_url = f"[Ref]({each.id})"
+            if in_output_url in output:
+                output = output.replace(in_output_url, f"{each.jump_url}")
+
+        return output
 
 
 class CommandsCog(Cog):
@@ -98,11 +106,26 @@ class CommandsCog(Cog):
         channel_id = ctx.channel.id
         user_ids = {user.id for user in self.bot.channel_whitelist[0][1]}
         messages = await self.bot.get_messages_base_on_whitelist(channel_id, user_ids)
-        summary = await self.bot.casual_summarize_messages(messages)
+        output = await self.bot.casual_summarize_messages(messages)
 
-        # Create an embed for better formatting
-        embed = Embed(title="Casual Summary", description=summary, color=Color.blue())
-        await ctx.reply(embed=embed)
+        # Convert timestamps to TZ+8
+        tz = pytz.timezone("Asia/Taipei")  # TZ+8 timezone
+        start_time = messages[0].created_at.replace(tzinfo=pytz.UTC).astimezone(tz)
+        end_time = messages[-1].created_at.replace(tzinfo=pytz.UTC).astimezone(tz)
+
+        # Send header message
+        await ctx.reply("**Casual Summary**")
+
+        # Send timestamp info
+        timestamp_info = f"摘要起點: {start_time.strftime('%Y-%m-%d %H:%M:%S')} (UTC+8)\n摘要終點: {end_time.strftime('%Y-%m-%d %H:%M:%S')} (UTC+8)"
+        await ctx.send(timestamp_info)
+
+        # Split and send content in chunks (Discord has a 2000 character limit)
+        chunk_size = 1900  # Slightly less than Discord's limit to be safe
+        chunks = [output[i : i + chunk_size] for i in range(0, len(output), chunk_size)]
+
+        for chunk in chunks:
+            await ctx.send(chunk)
 
     @command(name="serious_summarize")
     async def serious_summarize(self, ctx: Context):
@@ -115,10 +138,23 @@ class CommandsCog(Cog):
         channel_id = ctx.channel.id
         user_ids = {user.id for user in self.bot.channel_whitelist[0][1]}
         messages = await self.bot.get_messages_base_on_whitelist(channel_id, user_ids)
-        summary = await self.bot.serious_summarize_messages(messages)
+        output = await self.bot.serious_summarize_messages(messages)
 
-        # Create an embed for better formatting
-        embed = Embed(
-            title="Serious Summary", description=summary, color=Color.dark_green()
-        )
-        await ctx.reply(embed=embed)
+        # Convert timestamps to TZ+8
+        tz = pytz.timezone("Asia/Taipei")  # TZ+8 timezone
+        start_time = messages[0].created_at.replace(tzinfo=pytz.UTC).astimezone(tz)
+        end_time = messages[-1].created_at.replace(tzinfo=pytz.UTC).astimezone(tz)
+
+        # Send header message
+        await ctx.reply("**Serious Summary**")
+
+        # Send timestamp info
+        timestamp_info = f"摘要起點: {start_time.strftime('%Y-%m-%d %H:%M:%S')} (UTC+8)\n摘要終點: {end_time.strftime('%Y-%m-%d %H:%M:%S')} (UTC+8)"
+        await ctx.send(timestamp_info)
+
+        # Split and send content in chunks (Discord has a 2000 character limit)
+        chunk_size = 1900  # Slightly less than Discord's limit to be safe
+        chunks = [output[i : i + chunk_size] for i in range(0, len(output), chunk_size)]
+
+        for chunk in chunks:
+            await ctx.send(chunk)

@@ -2191,6 +2191,17 @@ files = [
 cli = ["click (>=5.0)"]
 
 [[package]]
+name = "pytz"
+version = "2025.2"
+description = "World timezone definitions, modern and historical"
+optional = false
+python-versions = "*"
+files = [
+    {file = "pytz-2025.2-py2.py3-none-any.whl", hash = "sha256:5ddf76296dd8c44c26eb8f4b6f35488f3ccbf6fbbd7adee0b7262d43f0ec2f00"},
+    {file = "pytz-2025.2.tar.gz", hash = "sha256:360b9e3dbb49a209c21ad61809c7fb453643e048b38924c765813546746e81c3"},
+]
+
+[[package]]
 name = "pywin32-ctypes"
 version = "0.2.3"
 description = "A (partial) reimplementation of pywin32 using ctypes/cffi"
@@ -2952,4 +2963,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.13"
-content-hash = "2f102f36e10a55a9e122e1fe38c38db220f8d14965bcce24b61ea80a049666b4"
+content-hash = "8290ad7461b086c24c984892ff6a9e823df8f99aeacd8ce1be690c4f03892943"
