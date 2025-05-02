@@ -1,49 +1,46 @@
 from dataclasses import dataclass
-from discord import Forbidden, Message, User, Embed, Color
+from typing import Union, List
+from discord import Message, User, Embed, Color, Member
 from discord.abc import Messageable
 from discord.ext import commands
 
 from google_vertex import GoogleVertexService
 from summarize import casual_summarize, serious_summarize
+from user_tracking import UserTrackingManager, RoleBasedTracker
 
 @dataclass
 class BotClient(commands.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.channel_whitelist: list[tuple[int, list[User]]] = []
+        self.channel_whitelist: list[tuple[int, list[Union[User, Member]]]] = []
         self.google_vertex_service = GoogleVertexService()
+        self.user_tracking_manager = UserTrackingManager()
+        
+        # Add user tracking strategies
+        self.user_tracking_manager.add_strategy(RoleBasedTracker(["AAA"]))
         
     async def setup_hook(self):
         await self.add_cog(CommandsCog(self))
 
     async def on_ready(self):
-        self.channel_whitelist = await self.scan_pinned_messages()
+        self.channel_whitelist = await self.refresh_user_tracking()
         print(f'{self.user} has connected to Discord!')
     
-    async def scan_pinned_messages(self):
-        print("Starting pinned messages scan...")
-        channel_whitelist = []
+    async def refresh_user_tracking(self) -> List[tuple[int, list[Union[User, Member]]]]:
+        """
+        Refresh the list of users to track by scanning all guilds
+        
+        Returns:
+            List of tuples containing (channel_id, list_of_users)
+        """
+        print("Starting user tracking refresh...")
+        all_tracked_users = []
+        
         for guild in self.guilds:
-            for channel in guild.text_channels:
-                try:
-                    pinned_partial_messages = await channel.pins()
-                    
-                    for partial_message in pinned_partial_messages:
-                        if "FomoBot Whitelist" in partial_message.content:
-                            message = await channel.fetch_message(partial_message.id)
-                            reactions = message.reactions
-                            
-                            if len(reactions) == 0:
-                                continue
-
-                            for reaction in reactions:
-                                if reaction.emoji == "✅":
-                                    channel_whitelist.append((channel.id, [user async for user in reaction.users()]))
-                except Forbidden:
-                    print(f"Don't have permission to read pins in {channel.name}")
-                except Exception as e:
-                    print(f"Error scanning channel {channel.name}: {str(e)}")
-        return channel_whitelist
+            guild_tracked_users = await self.user_tracking_manager.find_users_to_track(guild)
+            all_tracked_users.extend(guild_tracked_users)
+            
+        return all_tracked_users
 
     async def get_messages_base_on_whitelist(self, channel_id: int, user_ids: set[int]) -> list[Message]:
         channel = self.get_channel(channel_id)

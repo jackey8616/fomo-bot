@@ -10,7 +10,8 @@ bootstrap()
 # Bot setup
 intents = Intents.default()
 intents.message_content = True
-intents.reactions = True  # Enable reaction intents
+intents.members = True
+intents.reactions = True
 
 # Initialize the bot with command prefix
 client = BotClient(command_prefix='!', intents=intents)
