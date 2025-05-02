@@ -1,9 +1,9 @@
 from dataclasses import dataclass
-from typing import List, Union
+from typing import List, Optional, Union
 
 import pytz
 from discord import Member, Message, User
-from discord.abc import Messageable
+from discord.abc import GuildChannel, Messageable
 from discord.ext.commands import Bot, Cog, command
 from discord.ext.commands.context import Context
 
@@ -96,29 +96,40 @@ class CommandsCog(Cog):
         self.bot = bot
 
     @command(name="casual_summarize")
-    async def casual_summarize(self, ctx: Context):
-        """Summarizes the messages from whitelisted users"""
+    async def casual_summarize(
+        self, ctx: Context, channel: Optional[GuildChannel] = None
+    ):
+        """Summarizes the messages from whitelisted users
+
+        Parameters
+        -----------
+        channel: Optional[GuildChannel]
+            The channel to summarize messages from. If not provided, uses the current channel.
+        """
         if not self.bot.channel_whitelist:
             await ctx.reply("No whitelisted messages found!")
             return
 
-        # channel_id = self.bot.channel_whitelist[0][0]
-        channel_id = ctx.channel.id
+        # Use provided channel or current channel
+        target_channel = channel or ctx.channel
+        channel_id = target_channel.id
         user_ids = {user.id for user in self.bot.channel_whitelist[0][1]}
         messages = await self.bot.get_messages_base_on_whitelist(channel_id, user_ids)
-        output = await self.bot.casual_summarize_messages(messages)
+
+        if not messages:
+            await ctx.reply(
+                f"No whitelisted messages found in channel ID: {channel_id}!"
+            )
+            return
+
+        result = await self.bot.casual_summarize_messages(messages)
 
         # Convert timestamps to TZ+8
         tz = pytz.timezone("Asia/Taipei")  # TZ+8 timezone
         start_time = messages[0].created_at.replace(tzinfo=pytz.UTC).astimezone(tz)
         end_time = messages[-1].created_at.replace(tzinfo=pytz.UTC).astimezone(tz)
-
-        # Send header message
-        await ctx.reply("**Casual Summary**")
-
-        # Send timestamp info
-        timestamp_info = f"摘要起點: {start_time.strftime('%Y-%m-%d %H:%M:%S')} (UTC+8)\n摘要終點: {end_time.strftime('%Y-%m-%d %H:%M:%S')} (UTC+8)"
-        await ctx.send(timestamp_info)
+        timestamp_info = f"**Casual Summary** for channel ID: {channel_id}\n摘要起點: {start_time.strftime('%Y-%m-%d %H:%M:%S')} (UTC+8)\n摘要終點: {end_time.strftime('%Y-%m-%d %H:%M:%S')} (UTC+8)"
+        output = f"{timestamp_info}\n{result}"
 
         # Split and send content in chunks (Discord has a 2000 character limit)
         chunk_size = 1900  # Slightly less than Discord's limit to be safe
@@ -128,29 +139,40 @@ class CommandsCog(Cog):
             await ctx.send(chunk)
 
     @command(name="serious_summarize")
-    async def serious_summarize(self, ctx: Context):
-        """Summarizes the messages from whitelisted users"""
+    async def serious_summarize(
+        self, ctx: Context, channel: Optional[GuildChannel] = None
+    ):
+        """Summarizes the messages from whitelisted users
+
+        Parameters
+        -----------
+        channel: Optional[GuildChannel]
+            The channel to summarize messages from. If not provided, uses the current channel.
+        """
         if not self.bot.channel_whitelist:
             await ctx.reply("No whitelisted messages found!")
             return
 
-        # channel_id = self.bot.channel_whitelist[0][0]
-        channel_id = ctx.channel.id
+        # Use provided channel or current channel
+        target_channel = channel or ctx.channel
+        channel_id = target_channel.id
         user_ids = {user.id for user in self.bot.channel_whitelist[0][1]}
         messages = await self.bot.get_messages_base_on_whitelist(channel_id, user_ids)
-        output = await self.bot.serious_summarize_messages(messages)
+
+        if not messages:
+            await ctx.reply(
+                f"No whitelisted messages found in channel ID: {channel_id}!"
+            )
+            return
+
+        result = await self.bot.serious_summarize_messages(messages)
 
         # Convert timestamps to TZ+8
         tz = pytz.timezone("Asia/Taipei")  # TZ+8 timezone
         start_time = messages[0].created_at.replace(tzinfo=pytz.UTC).astimezone(tz)
         end_time = messages[-1].created_at.replace(tzinfo=pytz.UTC).astimezone(tz)
-
-        # Send header message
-        await ctx.reply("**Serious Summary**")
-
-        # Send timestamp info
-        timestamp_info = f"摘要起點: {start_time.strftime('%Y-%m-%d %H:%M:%S')} (UTC+8)\n摘要終點: {end_time.strftime('%Y-%m-%d %H:%M:%S')} (UTC+8)"
-        await ctx.send(timestamp_info)
+        timestamp_info = f"**Serious Summary** for channel ID: {channel_id}\n摘要起點: {start_time.strftime('%Y-%m-%d %H:%M:%S')} (UTC+8)\n摘要終點: {end_time.strftime('%Y-%m-%d %H:%M:%S')} (UTC+8)"
+        output = f"{timestamp_info}\n{result}"
 
         # Split and send content in chunks (Discord has a 2000 character limit)
         chunk_size = 1900  # Slightly less than Discord's limit to be safe
