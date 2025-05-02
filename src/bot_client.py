@@ -3,7 +3,8 @@ from typing import List, Union
 
 from discord import Color, Embed, Member, Message, User
 from discord.abc import Messageable
-from discord.ext import commands
+from discord.ext.commands import Bot, Cog, command
+from discord.ext.commands.context import Context
 
 from google_vertex import GoogleVertexService
 from summarize import casual_summarize, serious_summarize
@@ -11,7 +12,7 @@ from user_tracking import RoleBasedTracker, UserTrackingManager
 
 
 @dataclass
-class BotClient(commands.Bot):
+class BotClient(Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.channel_whitelist: list[tuple[int, list[Union[User, Member]]]] = []
@@ -19,7 +20,7 @@ class BotClient(commands.Bot):
         self.user_tracking_manager = UserTrackingManager()
 
         # Add user tracking strategies
-        self.user_tracking_manager.add_strategy(RoleBasedTracker(["AAA"]))
+        self.user_tracking_manager.add_strategy(RoleBasedTracker(["FomoTrack"]))
 
     async def setup_hook(self):
         await self.add_cog(CommandsCog(self))
@@ -82,15 +83,15 @@ class BotClient(commands.Bot):
         )
 
 
-class CommandsCog(commands.Cog):
+class CommandsCog(Cog):
     def __init__(self, bot: BotClient):
         self.bot = bot
 
-    @commands.command(name="casual_summarize")
-    async def casual_summarize(self, ctx):
+    @command(name="casual_summarize")
+    async def casual_summarize(self, ctx: Context):
         """Summarizes the messages from whitelisted users"""
         if not self.bot.channel_whitelist:
-            await ctx.send("No whitelisted messages found!")
+            await ctx.reply("No whitelisted messages found!")
             return
 
         # channel_id = self.bot.channel_whitelist[0][0]
@@ -101,13 +102,13 @@ class CommandsCog(commands.Cog):
 
         # Create an embed for better formatting
         embed = Embed(title="Casual Summary", description=summary, color=Color.blue())
-        await ctx.send(embed=embed)
+        await ctx.reply(embed=embed)
 
-    @commands.command(name="serious_summarize")
-    async def serious_summarize(self, ctx):
+    @command(name="serious_summarize")
+    async def serious_summarize(self, ctx: Context):
         """Summarizes the messages from whitelisted users"""
         if not self.bot.channel_whitelist:
-            await ctx.send("No whitelisted messages found!")
+            await ctx.reply("No whitelisted messages found!")
             return
 
         # channel_id = self.bot.channel_whitelist[0][0]
@@ -120,4 +121,4 @@ class CommandsCog(commands.Cog):
         embed = Embed(
             title="Serious Summary", description=summary, color=Color.dark_green()
         )
-        await ctx.send(embed=embed)
+        await ctx.reply(embed=embed)
