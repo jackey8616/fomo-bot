@@ -1,7 +1,7 @@
-from kink import di
-from bootstrap import bootstrap
-
 from discord import Intents
+from kink import di
+
+from bootstrap import bootstrap
 from bot_client import BotClient
 
 # Load environment variables
@@ -14,8 +14,8 @@ intents.members = True
 intents.reactions = True
 
 # Initialize the bot with command prefix
-client = BotClient(command_prefix='!', intents=intents)
+client = BotClient(command_prefix="!", intents=intents)
 
 # Run the bot
-token = di['DISCORD_TOKEN']
+token = di["DISCORD_TOKEN"]
 client.run(token)

@@ -1,6 +1,5 @@
-from typing import Optional
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from typing import Optional
 
 from kink import di
 from vertexai import init
@@ -21,17 +20,18 @@ class GoogleVertexService:
         model = GenerativeModel(
             model_name=model_name,
             system_instruction=[
-                Part.from_text(instruction)
-                for instruction in system_instructions
-            ] if system_instructions else None,
+                Part.from_text(instruction) for instruction in system_instructions
+            ]
+            if system_instructions
+            else None,
         )
         history = []
         chat_instance = model.start_chat(history=history)
 
-        start_datetime = datetime.now(tz=timezone.utc)
+        # start_datetime = datetime.now(tz=timezone.utc)
         response = chat_instance.send_message(content=Part.from_text(text=content))
         candidates = response.candidates
-        usage_metadata = response.usage_metadata
-        end_datetime = datetime.now(tz=timezone.utc)
+        # usage_metadata = response.usage_metadata
+        # end_datetime = datetime.now(tz=timezone.utc)
         output = candidates.pop().content.parts.pop().text
         return output
