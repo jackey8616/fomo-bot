@@ -8,8 +8,8 @@ A Discord bot that monitors whitelisted messages in channels and provides summar
   - Role-based tracking: Tracks users with the "FomoTrack" role across the guild
   - Pinned message tracking: Scans pinned messages for "FomoBot TrackList" keyword and tracks users who react with ✅
 - Provides two summarization modes:
-  - Casual summarization (`!casual_summarize`) - Quick, concise summary of recent messages
-  - Serious summarization (`!serious_summarize`) - Detailed, structured summary with key learnings, shared resources, help exchanges, and project updates
+  - Casual summarization (`/casual_summarize`) - Quick, concise summary of recent messages
+  - Serious summarization (`/serious_summarize`) - Detailed, structured summary with key learnings, shared resources, help exchanges, and project updates
 - Integration with Google Vertex AI (Gemini) for message summarization
 - Flexible architecture with dependency injection using Kink
 
@@ -53,8 +53,8 @@ The bot tracks users with the "FomoTrack" role by default. Users with this role 
 
 ### Bot Commands
 
-- `!casual_summarize [channel]` - Generates a concise summary of the conversation in a casual format. Optionally specify a channel to summarize.
-- `!serious_summarize [channel]` - Generates a detailed, structured summary of the conversation including key learnings, shared resources, help exchanges, and project updates. Optionally specify a channel to summarize.
+- `/casual_summarize [channel]` - Generates a concise summary of the conversation in a casual format. Optionally specify a channel to summarize.
+- `/serious_summarize [channel]` - Generates a detailed, structured summary of the conversation including key learnings, shared resources, help exchanges, and project updates. Optionally specify a channel to summarize.
 
 ## Google Vertex AI Integration
 
@@ -75,6 +75,7 @@ The bot needs the following permissions:
 - Manage Messages (for reading pinned messages)
 - Add Reactions (for processing whitelist reactions)
 - View Members (for role-based tracking)
+- Use Application Commands (for slash commands)
 
 ## Project Architecture
 

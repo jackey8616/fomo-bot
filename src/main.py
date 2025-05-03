@@ -13,7 +13,7 @@ intents.message_content = True
 intents.members = True
 intents.reactions = True
 
-# Initialize the bot with command prefix
+# Initialize the bot with command_prefix but we'll use application commands (slash commands)
 client = BotClient(command_prefix="!", intents=intents)
 
 # Run the bot

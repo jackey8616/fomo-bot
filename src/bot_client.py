@@ -2,10 +2,9 @@ from dataclasses import dataclass
 from typing import List, Optional, Union
 
 import pytz
-from discord import Member, Message, User
+from discord import Interaction, Member, Message, User, app_commands
 from discord.abc import GuildChannel, Messageable
-from discord.ext.commands import Bot, Cog, command
-from discord.ext.commands.context import Context
+from discord.ext.commands import Bot, Cog
 
 from google_vertex import GoogleVertexService
 from summarize import casual_summarize, serious_summarize_with_link
@@ -25,6 +24,10 @@ class BotClient(Bot):
 
     async def setup_hook(self):
         await self.add_cog(CommandsCog(self))
+        # Sync application commands with Discord
+        print("Syncing application commands...")
+        await self.tree.sync()
+        print("Application commands synced.")
 
     async def on_ready(self):
         self.channel_whitelist = await self.refresh_user_tracking()
@@ -95,29 +98,38 @@ class CommandsCog(Cog):
     def __init__(self, bot: BotClient):
         self.bot = bot
 
-    @command(name="casual_summarize")
+    @app_commands.command(
+        name="casual_summarize",
+        description="Summarizes the messages from whitelisted users in a casual format",
+    )
+    @app_commands.describe(
+        channel="The channel to summarize messages from. If not provided, uses the current channel."
+    )
     async def casual_summarize(
-        self, ctx: Context, channel: Optional[GuildChannel] = None
+        self, interaction: Interaction, channel: Optional[GuildChannel] = None
     ):
-        """Summarizes the messages from whitelisted users
-
-        Parameters
-        -----------
-        channel: Optional[GuildChannel]
-            The channel to summarize messages from. If not provided, uses the current channel.
-        """
+        """Summarizes the messages from whitelisted users in a casual format"""
         if not self.bot.channel_whitelist:
-            await ctx.reply("No whitelisted messages found!")
+            await interaction.response.send_message("No whitelisted messages found!")
             return
 
         # Use provided channel or current channel
-        target_channel = channel or ctx.channel
+        target_channel = channel or interaction.channel
+        if target_channel is None:
+            await interaction.response.send_message(
+                "Could not determine the channel to summarize."
+            )
+            return
+
         channel_id = target_channel.id
         user_ids = {user.id for user in self.bot.channel_whitelist[0][1]}
+
+        await interaction.response.defer(thinking=True)
+
         messages = await self.bot.get_messages_base_on_whitelist(channel_id, user_ids)
 
         if not messages:
-            await ctx.reply(
+            await interaction.followup.send(
                 f"No whitelisted messages found in channel ID: {channel_id}!"
             )
             return
@@ -131,36 +143,40 @@ class CommandsCog(Cog):
         timestamp_info = f"**Casual Summary** for channel ID: {channel_id}\n摘要起點: {start_time.strftime('%Y-%m-%d %H:%M:%S')} (UTC+8)\n摘要終點: {end_time.strftime('%Y-%m-%d %H:%M:%S')} (UTC+8)"
         output = f"{timestamp_info}\n{result}"
 
-        # Split and send content in chunks (Discord has a 2000 character limit)
-        chunk_size = 1900  # Slightly less than Discord's limit to be safe
-        chunks = [output[i : i + chunk_size] for i in range(0, len(output), chunk_size)]
+        await self._chunk_send(interaction, output)
 
-        for chunk in chunks:
-            await ctx.send(chunk)
-
-    @command(name="serious_summarize")
+    @app_commands.command(
+        name="serious_summarize",
+        description="Summarizes the messages from whitelisted users in a detailed format",
+    )
+    @app_commands.describe(
+        channel="The channel to summarize messages from. If not provided, uses the current channel."
+    )
     async def serious_summarize(
-        self, ctx: Context, channel: Optional[GuildChannel] = None
+        self, interaction: Interaction, channel: Optional[GuildChannel] = None
     ):
-        """Summarizes the messages from whitelisted users
-
-        Parameters
-        -----------
-        channel: Optional[GuildChannel]
-            The channel to summarize messages from. If not provided, uses the current channel.
-        """
+        """Summarizes the messages from whitelisted users in a detailed format"""
         if not self.bot.channel_whitelist:
-            await ctx.reply("No whitelisted messages found!")
+            await interaction.response.send_message("No whitelisted messages found!")
             return
 
         # Use provided channel or current channel
-        target_channel = channel or ctx.channel
+        target_channel = channel or interaction.channel
+        if target_channel is None:
+            await interaction.response.send_message(
+                "Could not determine the channel to summarize."
+            )
+            return
+
         channel_id = target_channel.id
         user_ids = {user.id for user in self.bot.channel_whitelist[0][1]}
+
+        await interaction.response.defer(thinking=True)
+
         messages = await self.bot.get_messages_base_on_whitelist(channel_id, user_ids)
 
         if not messages:
-            await ctx.reply(
+            await interaction.followup.send(
                 f"No whitelisted messages found in channel ID: {channel_id}!"
             )
             return
@@ -174,9 +190,16 @@ class CommandsCog(Cog):
         timestamp_info = f"**Serious Summary** for channel ID: {channel_id}\n摘要起點: {start_time.strftime('%Y-%m-%d %H:%M:%S')} (UTC+8)\n摘要終點: {end_time.strftime('%Y-%m-%d %H:%M:%S')} (UTC+8)"
         output = f"{timestamp_info}\n{result}"
 
-        # Split and send content in chunks (Discord has a 2000 character limit)
-        chunk_size = 1900  # Slightly less than Discord's limit to be safe
-        chunks = [output[i : i + chunk_size] for i in range(0, len(output), chunk_size)]
+        await self._chunk_send(interaction, output)
 
-        for chunk in chunks:
-            await ctx.send(chunk)
+    async def _chunk_send(
+        self, interaction: Interaction, content: str, chunk_size: int = 1900
+    ):
+        chunks = [
+            content[i : i + chunk_size] for i in range(0, len(content), chunk_size)
+        ]
+        for i, chunk in enumerate(chunks):
+            if i == 0:
+                await interaction.followup.send(chunk)
+            else:
+                await interaction.followup.send(chunk)
