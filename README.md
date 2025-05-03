@@ -9,9 +9,10 @@ A Discord bot that monitors whitelisted messages in channels and provides summar
   - Pinned message tracking: Scans pinned messages for "FomoBot TrackList" keyword and tracks users who react with ✅
 - Provides two summarization modes:
   - Casual summarization (`/casual_summarize`) - Quick, concise summary of recent messages
-  - Serious summarization (`/serious_summarize`) - Detailed, structured summary with key learnings, shared resources, help exchanges, and project updates
+  - Serious summarization (`/serious_summarize`) - Detailed, structured summary with message links
 - Integration with Google Vertex AI (Gemini) for message summarization
 - Flexible architecture with dependency injection using Kink
+- Timezone conversion to Asia/Taipei (UTC+8) for all timestamps
 
 ## Setup
 
@@ -39,22 +40,31 @@ GOOGLE_GCP_PROJECT_ID=your_google_cloud_project_id
 poetry run python src/main.py
 ```
 
+## Docker Support
+
+You can also run the bot using Docker:
+
+```bash
+docker build -t fomo-bot .
+docker run -d --env-file .env fomo-bot
+```
+
 ## Usage
 
 ### Setting Up User Tracking
 
 #### Role-Based Tracking
-The bot tracks users with the "FomoTrack" role by default. Users with this role will be monitored in all channels.
+The bot automatically tracks users with the "FomoTrack" role. Users with this role will be monitored in all channels.
 
 #### Pinned Message Tracking
 1. Create a pinned message in a channel with the content containing "FomoBot TrackList"
 2. React to this message with a ✅ emoji
-3. Any users who add a ✅ reaction to this message will be tracked
+3. Any users who add a ✅ reaction to this message will be tracked in that channel
 
 ### Bot Commands
 
 - `/casual_summarize [channel]` - Generates a concise summary of the conversation in a casual format. Optionally specify a channel to summarize.
-- `/serious_summarize [channel]` - Generates a detailed, structured summary of the conversation including key learnings, shared resources, help exchanges, and project updates. Optionally specify a channel to summarize.
+- `/serious_summarize [channel]` - Generates a detailed, structured summary of the conversation with timestamps and links to original messages. Optionally specify a channel to summarize.
 
 ## Google Vertex AI Integration
 
@@ -88,8 +98,11 @@ The project uses:
 
 ### Key Components
 
+- `main.py` - Entry point that initializes and runs the bot
+- `bootstrap.py` - Environment configuration and dependency injection setup
 - `bot_client.py` - Main Discord bot implementation with command handling
 - `user_tracking/` - Strategies for tracking users in channels
+  - `user_tracking_strategy.py` - Base strategy interface
   - `pinned_message_emoji_tracker.py` - Tracks users via pinned message reactions
   - `role_based_tracker.py` - Tracks users based on their roles
   - `user_tracking_manager.py` - Manages multiple tracking strategies
@@ -106,4 +119,8 @@ The project uses:
 6. Under "Privileged Gateway Intents", enable:
    - Message Content Intent
    - Server Members Intent
-7. Use the OAuth2 URL Generator to create an invite link with appropriate permissions 
+   - Presence Intent
+7. Navigate to the "OAuth2" tab
+8. Select "bot" and "applications.commands" scopes
+9. Select the required permissions from the "Bot Permissions" section
+10. Use the generated URL to invite the bot to your server 

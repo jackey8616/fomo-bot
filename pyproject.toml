@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fomo-bot"
-version = "0.2.0"
+version = "0.3.0"
 description = "A Discord bot that scans pinned messages for FOMO keyword"
 authors = ["Clooooode <clode@clo5de.info>"]
 readme = "README.md"
