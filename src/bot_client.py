@@ -141,7 +141,7 @@ class CommandsCog(Cog):
         tz = pytz.timezone("Asia/Taipei")  # TZ+8 timezone
         start_time = messages[0].created_at.replace(tzinfo=pytz.UTC).astimezone(tz)
         end_time = messages[-1].created_at.replace(tzinfo=pytz.UTC).astimezone(tz)
-        timestamp_info = f"**Casual Summary** for channel {channel_url}\n摘要起點: {start_time.strftime('%Y-%m-%d %H:%M:%S')} (UTC+8)\n摘要終點: {end_time.strftime('%Y-%m-%d %H:%M:%S')} (UTC+8)"
+        timestamp_info = f"**Casual Summary** for channel {channel_url}\n\n摘要起點: {start_time.strftime('%Y-%m-%d %H:%M:%S')} (UTC+8)\n摘要終點: {end_time.strftime('%Y-%m-%d %H:%M:%S')} (UTC+8)"
         output = f"{timestamp_info}\n{result}"
 
         await self._chunk_send(interaction, output)
@@ -189,7 +189,7 @@ class CommandsCog(Cog):
         tz = pytz.timezone("Asia/Taipei")  # TZ+8 timezone
         start_time = messages[0].created_at.replace(tzinfo=pytz.UTC).astimezone(tz)
         end_time = messages[-1].created_at.replace(tzinfo=pytz.UTC).astimezone(tz)
-        timestamp_info = f"**Serious Summary** for channel {channel_url}\n摘要起點: {start_time.strftime('%Y-%m-%d %H:%M:%S')} (UTC+8)\n摘要終點: {end_time.strftime('%Y-%m-%d %H:%M:%S')} (UTC+8)"
+        timestamp_info = f"**Serious Summary** for channel {channel_url}\n\n摘要起點: {start_time.strftime('%Y-%m-%d %H:%M:%S')} (UTC+8)\n摘要終點: {end_time.strftime('%Y-%m-%d %H:%M:%S')} (UTC+8)"
         output = f"{timestamp_info}\n{result}"
 
         await self._chunk_send(interaction, output)
@@ -197,9 +197,51 @@ class CommandsCog(Cog):
     async def _chunk_send(
         self, interaction: Interaction, content: str, chunk_size: int = 1900
     ):
-        chunks = [
-            content[i : i + chunk_size] for i in range(0, len(content), chunk_size)
-        ]
+        # Split content by lines first
+        lines = content.split("\n")
+        chunks = []
+        current_chunk = ""
+
+        for line in lines:
+            # If adding this line would exceed chunk size, start a new chunk
+            if len(current_chunk) + len(line) + 1 > chunk_size:
+                # If the line itself is longer than chunk_size, we need to split it
+                if len(line) > chunk_size:
+                    remaining_line = line
+                    while remaining_line:
+                        available_space = chunk_size - len(current_chunk)
+                        if available_space <= 0:
+                            chunks.append(current_chunk)
+                            current_chunk = ""
+                            available_space = chunk_size
+
+                        chunk_part = remaining_line[:available_space]
+                        remaining_line = remaining_line[available_space:]
+
+                        if current_chunk:
+                            current_chunk += "\n" + chunk_part
+                        else:
+                            current_chunk = chunk_part
+
+                        if len(current_chunk) >= chunk_size:
+                            chunks.append(current_chunk)
+                            current_chunk = ""
+                else:
+                    # Add current chunk to chunks and start a new one with this line
+                    chunks.append(current_chunk)
+                    current_chunk = line
+            else:
+                # Add line to current chunk
+                if current_chunk:
+                    current_chunk += "\n" + line
+                else:
+                    current_chunk = line
+
+        # Add the last chunk if it's not empty
+        if current_chunk:
+            chunks.append(current_chunk)
+
+        # Send all chunks
         for i, chunk in enumerate(chunks):
             if i == 0:
                 await interaction.followup.send(chunk)
