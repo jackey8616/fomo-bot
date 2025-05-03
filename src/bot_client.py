@@ -122,6 +122,7 @@ class CommandsCog(Cog):
             return
 
         channel_id = target_channel.id
+        channel_url = target_channel.jump_url
         user_ids = {user.id for user in self.bot.channel_whitelist[0][1]}
 
         await interaction.response.defer(thinking=True)
@@ -130,7 +131,7 @@ class CommandsCog(Cog):
 
         if not messages:
             await interaction.followup.send(
-                f"No whitelisted messages found in channel ID: {channel_id}!"
+                f"No whitelisted messages found in channel {channel_url}!"
             )
             return
 
@@ -140,7 +141,7 @@ class CommandsCog(Cog):
         tz = pytz.timezone("Asia/Taipei")  # TZ+8 timezone
         start_time = messages[0].created_at.replace(tzinfo=pytz.UTC).astimezone(tz)
         end_time = messages[-1].created_at.replace(tzinfo=pytz.UTC).astimezone(tz)
-        timestamp_info = f"**Casual Summary** for channel ID: {channel_id}\n摘要起點: {start_time.strftime('%Y-%m-%d %H:%M:%S')} (UTC+8)\n摘要終點: {end_time.strftime('%Y-%m-%d %H:%M:%S')} (UTC+8)"
+        timestamp_info = f"**Casual Summary** for channel {channel_url}\n摘要起點: {start_time.strftime('%Y-%m-%d %H:%M:%S')} (UTC+8)\n摘要終點: {end_time.strftime('%Y-%m-%d %H:%M:%S')} (UTC+8)"
         output = f"{timestamp_info}\n{result}"
 
         await self._chunk_send(interaction, output)
@@ -169,6 +170,7 @@ class CommandsCog(Cog):
             return
 
         channel_id = target_channel.id
+        channel_url = target_channel.jump_url
         user_ids = {user.id for user in self.bot.channel_whitelist[0][1]}
 
         await interaction.response.defer(thinking=True)
@@ -177,7 +179,7 @@ class CommandsCog(Cog):
 
         if not messages:
             await interaction.followup.send(
-                f"No whitelisted messages found in channel ID: {channel_id}!"
+                f"No whitelisted messages found in channel {channel_url}!"
             )
             return
 
@@ -187,7 +189,7 @@ class CommandsCog(Cog):
         tz = pytz.timezone("Asia/Taipei")  # TZ+8 timezone
         start_time = messages[0].created_at.replace(tzinfo=pytz.UTC).astimezone(tz)
         end_time = messages[-1].created_at.replace(tzinfo=pytz.UTC).astimezone(tz)
-        timestamp_info = f"**Serious Summary** for channel ID: {channel_id}\n摘要起點: {start_time.strftime('%Y-%m-%d %H:%M:%S')} (UTC+8)\n摘要終點: {end_time.strftime('%Y-%m-%d %H:%M:%S')} (UTC+8)"
+        timestamp_info = f"**Serious Summary** for channel {channel_url}\n摘要起點: {start_time.strftime('%Y-%m-%d %H:%M:%S')} (UTC+8)\n摘要終點: {end_time.strftime('%Y-%m-%d %H:%M:%S')} (UTC+8)"
         output = f"{timestamp_info}\n{result}"
 
         await self._chunk_send(interaction, output)
