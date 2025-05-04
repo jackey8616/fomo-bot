@@ -1,20 +1,20 @@
 # FOMO Bot
 
-A Discord bot that monitors tracking users's messages in channels and provides summarization features with multi-language support.
+A Discord bot that monitors and tracks users's messages in channels and provides summarization features with multi-language support.
 
 ## Features
 
 - Multiple user tracking strategies:
-  - Role-based tracking: Tracks users with the "FomoTrack" role across the guild
+  - Role-based tracking: Tracks users with the "FomoTrack" role across channels
   - Pinned message tracking: Scans pinned messages for "FomoBot TrackList" keyword and tracks users who react with ✅
-  - Supports extensible tracking strategies through the `UserTrackingManager`
-- Provides two summarization modes:
+  - Extensible tracking architecture through the `UserTrackingStrategy` interface and `UserTrackingManager`
+- Two summarization modes:
   - Casual summarization (`/casual_summarize`) - Quick, concise summary of recent messages
   - Serious summarization (`/serious_summarize`) - Detailed, structured summary with message links
-- Integration with Google Vertex AI (Gemini 2.0 Flash) for message summarization
-- Multi-language support (English and Traditional Chinese) for commands
-- Flexible architecture with dependency injection using Kink
-- Timezone conversion to Asia/Taipei (UTC+8) for all timestamps
+- Google Vertex AI integration using Gemini 2.0 Flash model for intelligent message summarization
+- Multi-language support (English and Traditional Chinese) for commands and responses
+- Dependency injection architecture using Kink for flexible component management
+- Timezone conversion to Asia/Taipei (UTC+8) for consistent timestamp display
 
 ## Setup
 
@@ -56,39 +56,39 @@ docker run -d --env-file .env fomo-bot
 ### Setting Up User Tracking
 
 #### Role-Based Tracking
-The bot automatically tracks users with the "FomoTrack" role. Users with this role will be monitored in all channels.
+The bot automatically tracks users with the "FomoTrack" role. Create this role in your Discord server and assign it to users whose messages you want to track.
 
 #### Pinned Message Tracking
-1. Create a pinned message in a channel with the content containing "FomoBot TrackList"
-2. React to this message with a ✅ emoji
-3. Any users who add a ✅ reaction to this message will be tracked in that channel
+1. Create a message containing the phrase "FomoBot TrackList" in the channel you want to monitor
+2. Pin this message to the channel
+3. Users can add a ✅ reaction to this pinned message to be tracked in that channel
 
 ### Bot Commands
 
-- `/casual_summarize [channel]` - Generates a concise summary of the conversation in a casual format. Optionally specify a channel to summarize.
-- `/serious_summarize [channel]` - Generates a detailed, structured summary of the conversation with timestamps and links to original messages. Optionally specify a channel to summarize.
+- `/casual_summarize [channel]` - Generates a concise summary of tracked users' messages in a casual format. Optionally specify a channel to summarize.
+- `/serious_summarize [channel]` - Generates a detailed, structured summary with timestamps and links to original messages. Optionally specify a channel to summarize.
 
 Both commands support English and Traditional Chinese localization.
 
 ## Google Vertex AI Integration
 
-The bot uses Google's Vertex AI API with Gemini models for text summarization. Key features:
+The bot uses Google's Vertex AI with Gemini models for intelligent text summarization:
 
 - Uses the `gemini-2.0-flash-001` model for efficient processing
-- Implements different summarization strategies for different use cases
+- Implements different prompt strategies for casual vs. serious summarization needs
 - Maintains message context and conversation flow in summaries
 - Converts message timestamps to Asia/Taipei timezone (UTC+8)
-- Includes links to original messages in serious summaries
+- Includes jump links to original messages in serious summaries
 
 ## Bot Permissions
 
-The bot needs the following permissions:
+The bot requires the following Discord permissions:
 - Read Messages/View Channels
 - Send Messages
 - Read Message History
-- Manage Messages (for reading pinned messages)
-- Add Reactions (for processing tracking user reactions)
-- View Members (for role-based tracking)
+- Manage Messages (for accessing pinned messages)
+- Add Reactions (for reaction processing)
+- View Guild Members (for role-based tracking)
 - Use Application Commands (for slash commands)
 
 ## Project Architecture
@@ -97,36 +97,35 @@ The project uses:
 - Python 3.13
 - discord.py 2.3.2
 - Kink for dependency injection
-- Google Cloud Vertex AI
+- Google Cloud Vertex AI for AI summarization
 - pytz for timezone handling
 - Poetry for dependency management
 
 ### Key Components
 
-- `main.py` - Entry point that initializes and runs the bot
+- `main.py` - Entry point that initializes the bot
 - `bootstrap.py` - Environment configuration and dependency injection setup
-- `bot_client.py` - Main Discord bot implementation with command handling
-- `translator.py` - Handles multi-language support for bot commands
-- `user_tracking/` - Strategies for tracking users in channels
+- `bot_client.py` - Main Discord bot implementation with command handlers
+- `translator.py` - Multi-language support for bot commands and responses
+- `user_tracking/` - User tracking implementation
   - `user_tracking_strategy.py` - Base strategy interface
-  - `role_based_tracker.py` - Tracks users based on their roles
+  - `role_based_tracker.py` - Tracks users based on Discord roles
   - `pinned_message_emoji_tracker.py` - Tracks users via pinned message reactions
   - `user_tracking_manager.py` - Manages multiple tracking strategies
-- `summarize.py` - Provides different summarization strategies
+- `summarize.py` - Provides message summarization strategies
 - `google_vertex.py` - Integration with Google Vertex AI
 
 ## Setting Up a Discord Bot
 
 1. Go to the [Discord Developer Portal](https://discord.com/developers/applications)
 2. Create a new application
-3. Navigate to the "Bot" tab
-4. Click "Add Bot"
-5. Copy the token and add it to your `.env` file
-6. Under "Privileged Gateway Intents", enable:
+3. Navigate to the "Bot" tab and click "Add Bot"
+4. Copy the token and add it to your `.env` file
+5. Under "Privileged Gateway Intents", enable:
    - Message Content Intent
    - Server Members Intent
    - Presence Intent
-7. Navigate to the "OAuth2" tab
-8. Select "bot" and "applications.commands" scopes
-9. Select the required permissions from the "Bot Permissions" section
-10. Use the generated URL to invite the bot to your server 
+6. Navigate to the "OAuth2" tab
+7. Select "bot" and "applications.commands" scopes
+8. Select the required permissions in the "Bot Permissions" section
+9. Use the generated URL to invite the bot to your server 
