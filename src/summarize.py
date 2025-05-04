@@ -9,7 +9,7 @@ def casual_summarize(messages: list[Message]) -> tuple[list[str], str]:
     ]
     user_instructions = ["<messages>"]
     for message in messages:
-        user_instructions.append(f"{message.author.name}: {message.content}")
+        user_instructions.append(f"{message.author.display_name}: {message.content}")
     user_instructions.append("</messages>")
     return (system_instructions, "\n".join(user_instructions))
 
@@ -17,7 +17,9 @@ def casual_summarize(messages: list[Message]) -> tuple[list[str], str]:
 def serious_summarize(messages: list[Message]) -> tuple[list[str], str]:
     raw_messages = ""
     for message in messages:
-        raw_messages += f"[{message.created_at}] {message.author}: {message.content}\n"
+        raw_messages += (
+            f"[{message.created_at}] {message.author.display_name}: {message.content}\n"
+        )
 
     system_instructions = [
         "You are an expert summarizer of casual Discord chat logs from a software side project community."
@@ -114,6 +116,6 @@ def serious_summarize_with_link(messages: list[Message]) -> tuple[list[str], str
     ]
     raw_messages = ""
     for message in messages:
-        raw_messages += f"[{message.created_at}] {message.author}: {message.content} (link_to:{message.id})\n"
+        raw_messages += f"[{message.created_at}] {message.author.display_name}: {message.content} (link_to:{message.id})\n"
     user_prompt = f"<chat_log>\n{raw_messages}\n</chat_log>"
     return (system_instructions, user_prompt)

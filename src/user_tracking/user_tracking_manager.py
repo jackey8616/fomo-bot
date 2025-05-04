@@ -1,7 +1,6 @@
-from collections import defaultdict
-from typing import Dict, List, Optional, Set, Tuple, Union
+from typing import List, Optional, Set, Union
 
-from discord import Guild, Member, TextChannel, User
+from discord import Guild, Member, User
 
 from .user_tracking_strategy import UserTrackingStrategy
 
@@ -19,8 +18,10 @@ class UserTrackingManager:
         self.strategies.append(strategy)
 
     async def find_users_to_track(
-        self, guild: Guild
-    ) -> List[Tuple[int, List[Union[User, Member]]]]:
+        self,
+        guild: Guild,
+        channel_id: int,
+    ) -> Set[Union[User, Member]]:
         """
         Process a guild through all strategies to find users to track
 
@@ -30,21 +31,11 @@ class UserTrackingManager:
         Returns:
             List of tuples containing (channel_id, list_of_users)
         """
-        # Dictionary to track users by channel
-        channel_users: Dict[TextChannel, Set[Union[User, Member]]] = defaultdict(set)
+        result: Set[Union[User, Member]] = set()
 
         # Apply all strategies
         for strategy in self.strategies:
-            strategy_results = await strategy.find_users_to_track(guild)
-
-            # Combine results from this strategy
-            for channel, users in strategy_results:
-                channel_users[channel].update(users)
-
-        # Convert to the expected return format
-        result = []
-        for channel, users in channel_users.items():
-            if users:  # Only include channels with users to track
-                result.append((channel.id, list(users)))
+            strategy_results = await strategy.find_users_to_track(guild, channel_id)
+            result.update(strategy_results)
 
         return result

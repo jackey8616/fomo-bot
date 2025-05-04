@@ -1,6 +1,7 @@
-from typing import List, Tuple, Union
+from typing import List, Union
 
-from discord import Forbidden, Guild, Member, TextChannel, User
+from discord import Forbidden, Guild, Member, User
+from discord.abc import Messageable
 
 from .user_tracking_strategy import UserTrackingStrategy
 
@@ -13,8 +14,10 @@ class PinnedMessageEmojiTracker(UserTrackingStrategy):
         self.emoji = emoji
 
     async def find_users_to_track(
-        self, guild: Guild
-    ) -> List[Tuple[TextChannel, List[Union[User, Member]]]]:
+        self,
+        guild: Guild,
+        channel_id: int,
+    ) -> List[Union[User, Member]]:
         """
         Find users to track by scanning pinned messages across all channels in the guild
 
@@ -24,35 +27,34 @@ class PinnedMessageEmojiTracker(UserTrackingStrategy):
         Returns:
             A list of tuples containing (channel, list_of_users_to_track)
         """
-        result = []
+        users_to_track: List[Union[User, Member]] = []
+        channel = guild.get_channel(channel_id)
 
-        for channel in guild.text_channels:
-            try:
-                pinned_messages = await channel.pins()
+        if channel is None:
+            return []
+        elif isinstance(channel, Messageable) is False:
+            return []
 
-                for partial_message in pinned_messages:
-                    # Fetch the full message to get reactions
-                    message = await channel.fetch_message(partial_message.id)
+        assert isinstance(channel, Messageable)
+        try:
+            pinned_messages = await channel.pins()
 
-                    # Check if this is a tracking message
-                    if self.tracking_keyword not in message.content:
-                        continue
+            for partial_message in pinned_messages:
+                # Fetch the full message to get reactions
+                message = await channel.fetch_message(partial_message.id)
 
-                    # Check reactions for the tracking emoji
-                    users_to_track = []
-                    for reaction in message.reactions:
-                        if reaction.emoji == self.emoji:
-                            # Get all users who reacted with this emoji
-                            users = [user async for user in reaction.users()]
-                            users_to_track.extend(users)
+                # Check if this is a tracking message
+                if self.tracking_keyword not in message.content:
+                    continue
 
-                    # If we found users to track, add to results
-                    if users_to_track:
-                        result.append((channel, users_to_track))
+                for reaction in message.reactions:
+                    if reaction.emoji == self.emoji:
+                        # Get all users who reacted with this emoji
+                        users = [user async for user in reaction.users()]
+                        users_to_track.extend(users)
+        except Forbidden:
+            print(f"Don't have permission to read pins in {channel.name}")
+        except Exception as e:
+            print(f"Error scanning channel {channel.name}: {str(e)}")
 
-            except Forbidden:
-                print(f"Don't have permission to read pins in {channel.name}")
-            except Exception as e:
-                print(f"Error scanning channel {channel.name}: {str(e)}")
-
-        return result
+        return users_to_track

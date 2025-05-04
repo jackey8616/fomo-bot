@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import List, Tuple, Union
+from typing import List, Union
 
-from discord import Guild, Member, TextChannel, User
+from discord import Guild, Member, User
 
 
 class UserTrackingStrategy(ABC):
@@ -9,8 +9,10 @@ class UserTrackingStrategy(ABC):
 
     @abstractmethod
     async def find_users_to_track(
-        self, guild: Guild
-    ) -> List[Tuple[TextChannel, List[Union[User, Member]]]]:
+        self,
+        guild: Guild,
+        channel_id: int,
+    ) -> List[Union[User, Member]]:
         """
         Determines which users should be tracked based on server-wide criteria
 

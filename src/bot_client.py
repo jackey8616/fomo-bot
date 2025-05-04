@@ -1,8 +1,8 @@
 from dataclasses import dataclass
-from typing import List, Optional, Union
+from typing import Optional
 
 import pytz
-from discord import Interaction, Member, Message, User, app_commands
+from discord import Interaction, Message, app_commands
 from discord.abc import GuildChannel, Messageable
 from discord.ext.commands import Bot, Cog
 
@@ -16,7 +16,6 @@ from user_tracking import RoleBasedTracker, UserTrackingManager
 class BotClient(Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.channel_tracking_users: list[tuple[int, list[Union[User, Member]]]] = []
         self.google_vertex_service = GoogleVertexService()
         self.user_tracking_manager = UserTrackingManager()
 
@@ -32,28 +31,7 @@ class BotClient(Bot):
         print("Application commands synced.")
 
     async def on_ready(self):
-        self.channel_tracking_users = await self.refresh_user_tracking()
         print(f"{self.user} has connected to Discord!")
-
-    async def refresh_user_tracking(
-        self,
-    ) -> List[tuple[int, list[Union[User, Member]]]]:
-        """
-        Refresh the list of users to track by scanning all guilds
-
-        Returns:
-            List of tuples containing (channel_id, list_of_users)
-        """
-        print("Starting user tracking refresh...")
-        all_tracked_users = []
-
-        for guild in self.guilds:
-            guild_tracked_users = await self.user_tracking_manager.find_users_to_track(
-                guild
-            )
-            all_tracked_users.extend(guild_tracked_users)
-
-        return all_tracked_users
 
     async def get_messages_from_tracking_users(
         self, channel_id: int, user_ids: set[int]
@@ -111,6 +89,8 @@ class CommandsCog(Cog):
         self, interaction: Interaction, channel: Optional[GuildChannel] = None
     ):
         """Summarizes the messages from tracking users in a casual format"""
+        assert interaction.guild is not None
+
         # Use provided channel or current channel
         target_channel = channel or interaction.channel
         if target_channel is None:
@@ -123,7 +103,13 @@ class CommandsCog(Cog):
 
         channel_id = target_channel.id
         channel_url = target_channel.jump_url
-        user_ids = {user.id for user in self.bot.channel_tracking_users[0][1]}
+        user_ids = {
+            user.id
+            for user in await self.bot.user_tracking_manager.find_users_to_track(
+                interaction.guild,
+                channel_id,
+            )
+        }
 
         await interaction.response.defer(thinking=True)
 
@@ -162,6 +148,8 @@ class CommandsCog(Cog):
         self, interaction: Interaction, channel: Optional[GuildChannel] = None
     ):
         """Summarizes the messages from tracking users in a detailed format"""
+        assert interaction.guild is not None
+
         # Use provided channel or current channel
         target_channel = channel or interaction.channel
         if target_channel is None:
@@ -174,7 +162,13 @@ class CommandsCog(Cog):
 
         channel_id = target_channel.id
         channel_url = target_channel.jump_url
-        user_ids = {user.id for user in self.bot.channel_tracking_users[0][1]}
+        user_ids = {
+            user.id
+            for user in await self.bot.user_tracking_manager.find_users_to_track(
+                interaction.guild,
+                channel_id,
+            )
+        }
 
         await interaction.response.defer(thinking=True)
 

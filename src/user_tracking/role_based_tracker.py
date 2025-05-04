@@ -1,6 +1,6 @@
-from typing import List, Tuple, Union
+from typing import List, Union
 
-from discord import Guild, Member, TextChannel, User
+from discord import Guild, Member, Role, User
 
 from .user_tracking_strategy import UserTrackingStrategy
 
@@ -12,8 +12,10 @@ class RoleBasedTracker(UserTrackingStrategy):
         self.role_names = role_names
 
     async def find_users_to_track(
-        self, guild: Guild
-    ) -> List[Tuple[TextChannel, List[Union[User, Member]]]]:
+        self,
+        guild: Guild,
+        channel_id: int,
+    ) -> List[Union[User, Member]]:
         """
         Find users to track based on their roles in the guild
 
@@ -24,8 +26,8 @@ class RoleBasedTracker(UserTrackingStrategy):
             A list of tuples containing (channel, list_of_users_to_track)
         """
         # Find all members with the specified roles
-        users_to_track = []
-        relevant_roles = []
+        users_to_track: List[Union[User, Member]] = []
+        relevant_roles: List[Role] = []
 
         # Find the roles we're interested in
         for role in guild.roles:
@@ -43,9 +45,4 @@ class RoleBasedTracker(UserTrackingStrategy):
             if any(role in member_roles for role in relevant_roles):
                 users_to_track.append(member)
 
-        # Add to every channel
-        result = []
-        for channel in guild.channels:
-            result.append((channel, users_to_track))
-
-        return result
+        return users_to_track
