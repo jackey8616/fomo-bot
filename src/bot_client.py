@@ -67,7 +67,7 @@ class BotClient(Bot):
         )
 
         for each in messages:
-            in_output_url = f"[Ref]({each.id})"
+            in_output_url = f"[Ref](link_to:{each.id})"
             if in_output_url in output:
                 output = output.replace(in_output_url, f"{each.jump_url}")
 
