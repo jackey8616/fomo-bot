@@ -1,6 +1,6 @@
 # FOMO Bot
 
-A Discord bot that monitors whitelisted messages in channels and provides summarization features with multi-language support.
+A Discord bot that monitors tracking users's messages in channels and provides summarization features with multi-language support.
 
 ## Features
 
@@ -87,7 +87,7 @@ The bot needs the following permissions:
 - Send Messages
 - Read Message History
 - Manage Messages (for reading pinned messages)
-- Add Reactions (for processing whitelist reactions)
+- Add Reactions (for processing tracking user reactions)
 - View Members (for role-based tracking)
 - Use Application Commands (for slash commands)
 

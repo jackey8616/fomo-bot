@@ -6,10 +6,10 @@ from .user_tracking_strategy import UserTrackingStrategy
 
 
 class PinnedMessageEmojiTracker(UserTrackingStrategy):
-    """Strategy for tracking users who reacted with a specific emoji to a whitelist message"""
+    """Strategy for tracking users who reacted with a specific emoji to a tracking message"""
 
-    def __init__(self, whitelist_keyword: str = "FomoBot TrackList", emoji: str = "✅"):
-        self.whitelist_keyword = whitelist_keyword
+    def __init__(self, tracking_keyword: str = "FomoBot TrackList", emoji: str = "✅"):
+        self.tracking_keyword = tracking_keyword
         self.emoji = emoji
 
     async def find_users_to_track(
@@ -34,11 +34,11 @@ class PinnedMessageEmojiTracker(UserTrackingStrategy):
                     # Fetch the full message to get reactions
                     message = await channel.fetch_message(partial_message.id)
 
-                    # Check if this is a whitelist message
-                    if self.whitelist_keyword not in message.content:
+                    # Check if this is a tracking message
+                    if self.tracking_keyword not in message.content:
                         continue
 
-                    # Check reactions for the whitelist emoji
+                    # Check reactions for the tracking emoji
                     users_to_track = []
                     for reaction in message.reactions:
                         if reaction.emoji == self.emoji:

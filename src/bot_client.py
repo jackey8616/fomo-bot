@@ -16,7 +16,7 @@ from user_tracking import RoleBasedTracker, UserTrackingManager
 class BotClient(Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.channel_whitelist: list[tuple[int, list[Union[User, Member]]]] = []
+        self.channel_tracking_users: list[tuple[int, list[Union[User, Member]]]] = []
         self.google_vertex_service = GoogleVertexService()
         self.user_tracking_manager = UserTrackingManager()
 
@@ -32,7 +32,7 @@ class BotClient(Bot):
         print("Application commands synced.")
 
     async def on_ready(self):
-        self.channel_whitelist = await self.refresh_user_tracking()
+        self.channel_tracking_users = await self.refresh_user_tracking()
         print(f"{self.user} has connected to Discord!")
 
     async def refresh_user_tracking(
@@ -55,7 +55,7 @@ class BotClient(Bot):
 
         return all_tracked_users
 
-    async def get_messages_base_on_whitelist(
+    async def get_messages_from_tracking_users(
         self, channel_id: int, user_ids: set[int]
     ) -> list[Message]:
         channel = self.get_channel(channel_id)
@@ -110,30 +110,33 @@ class CommandsCog(Cog):
     async def casual_summarize(
         self, interaction: Interaction, channel: Optional[GuildChannel] = None
     ):
-        """Summarizes the messages from whitelisted users in a casual format"""
-        if not self.bot.channel_whitelist:
-            await interaction.response.send_message("No whitelisted messages found!")
-            return
-
+        """Summarizes the messages from tracking users in a casual format"""
         # Use provided channel or current channel
         target_channel = channel or interaction.channel
         if target_channel is None:
             await interaction.response.send_message(
-                "Could not determine the channel to summarize."
+                await self._translated_message(
+                    interaction, app_commands.locale_str("missing_channel")
+                )
             )
             return
 
         channel_id = target_channel.id
         channel_url = target_channel.jump_url
-        user_ids = {user.id for user in self.bot.channel_whitelist[0][1]}
+        user_ids = {user.id for user in self.bot.channel_tracking_users[0][1]}
 
         await interaction.response.defer(thinking=True)
 
-        messages = await self.bot.get_messages_base_on_whitelist(channel_id, user_ids)
+        messages = await self.bot.get_messages_from_tracking_users(channel_id, user_ids)
 
         if not messages:
             await interaction.followup.send(
-                f"No whitelisted messages found in channel {channel_url}!"
+                await self._translated_message(
+                    interaction,
+                    app_commands.locale_str(
+                        "empty_messages", extras={"channel_url": channel_url}
+                    ),
+                )
             )
             return
 
@@ -158,30 +161,33 @@ class CommandsCog(Cog):
     async def serious_summarize(
         self, interaction: Interaction, channel: Optional[GuildChannel] = None
     ):
-        """Summarizes the messages from whitelisted users in a detailed format"""
-        if not self.bot.channel_whitelist:
-            await interaction.response.send_message("No whitelisted messages found!")
-            return
-
+        """Summarizes the messages from tracking users in a detailed format"""
         # Use provided channel or current channel
         target_channel = channel or interaction.channel
         if target_channel is None:
             await interaction.response.send_message(
-                "Could not determine the channel to summarize."
+                await self._translated_message(
+                    interaction, app_commands.locale_str("missing_channel")
+                )
             )
             return
 
         channel_id = target_channel.id
         channel_url = target_channel.jump_url
-        user_ids = {user.id for user in self.bot.channel_whitelist[0][1]}
+        user_ids = {user.id for user in self.bot.channel_tracking_users[0][1]}
 
         await interaction.response.defer(thinking=True)
 
-        messages = await self.bot.get_messages_base_on_whitelist(channel_id, user_ids)
+        messages = await self.bot.get_messages_from_tracking_users(channel_id, user_ids)
 
         if not messages:
             await interaction.followup.send(
-                f"No whitelisted messages found in channel {channel_url}!"
+                await self._translated_message(
+                    interaction,
+                    app_commands.locale_str(
+                        "empty_messages", extras={"channel_url": channel_url}
+                    ),
+                )
             )
             return
 
@@ -249,3 +255,13 @@ class CommandsCog(Cog):
                 await interaction.followup.send(chunk)
             else:
                 await interaction.followup.send(chunk)
+
+    async def _translated_message(
+        self, interaction: Interaction, message: app_commands.locale_str
+    ) -> str:
+        translated_message = await interaction.translate(
+            message,
+            locale=interaction.locale,
+        )
+        assert translated_message is not None
+        return translated_message
