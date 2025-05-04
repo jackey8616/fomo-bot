@@ -8,6 +8,7 @@ from discord.ext.commands import Bot, Cog
 
 from google_vertex import GoogleVertexService
 from summarize import casual_summarize, serious_summarize_with_link
+from translator import Translator
 from user_tracking import RoleBasedTracker, UserTrackingManager
 
 
@@ -26,6 +27,7 @@ class BotClient(Bot):
         await self.add_cog(CommandsCog(self))
         # Sync application commands with Discord
         print("Syncing application commands...")
+        await self.tree.set_translator(translator=Translator())
         await self.tree.sync()
         print("Application commands synced.")
 
@@ -100,10 +102,10 @@ class CommandsCog(Cog):
 
     @app_commands.command(
         name="casual_summarize",
-        description="Summarizes the messages from whitelisted users in a casual format",
+        description=app_commands.locale_str("casual_summarize_description"),
     )
     @app_commands.describe(
-        channel="The channel to summarize messages from. If not provided, uses the current channel."
+        channel=app_commands.locale_str("casual_summarize_describe_channel")
     )
     async def casual_summarize(
         self, interaction: Interaction, channel: Optional[GuildChannel] = None
@@ -148,10 +150,10 @@ class CommandsCog(Cog):
 
     @app_commands.command(
         name="serious_summarize",
-        description="Summarizes the messages from whitelisted users in a detailed format",
+        description=app_commands.locale_str("serious_summarize_description"),
     )
     @app_commands.describe(
-        channel="The channel to summarize messages from. If not provided, uses the current channel."
+        channel=app_commands.locale_str("serious_summarize_describe_channel")
     )
     async def serious_summarize(
         self, interaction: Interaction, channel: Optional[GuildChannel] = None
