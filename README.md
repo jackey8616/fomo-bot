@@ -1,16 +1,18 @@
 # FOMO Bot
 
-A Discord bot that monitors whitelisted messages in channels and provides summarization features.
+A Discord bot that monitors whitelisted messages in channels and provides summarization features with multi-language support.
 
 ## Features
 
 - Multiple user tracking strategies:
   - Role-based tracking: Tracks users with the "FomoTrack" role across the guild
   - Pinned message tracking: Scans pinned messages for "FomoBot TrackList" keyword and tracks users who react with ✅
+  - Supports extensible tracking strategies through the `UserTrackingManager`
 - Provides two summarization modes:
   - Casual summarization (`/casual_summarize`) - Quick, concise summary of recent messages
   - Serious summarization (`/serious_summarize`) - Detailed, structured summary with message links
-- Integration with Google Vertex AI (Gemini) for message summarization
+- Integration with Google Vertex AI (Gemini 2.0 Flash) for message summarization
+- Multi-language support (English and Traditional Chinese) for commands
 - Flexible architecture with dependency injection using Kink
 - Timezone conversion to Asia/Taipei (UTC+8) for all timestamps
 
@@ -66,6 +68,8 @@ The bot automatically tracks users with the "FomoTrack" role. Users with this ro
 - `/casual_summarize [channel]` - Generates a concise summary of the conversation in a casual format. Optionally specify a channel to summarize.
 - `/serious_summarize [channel]` - Generates a detailed, structured summary of the conversation with timestamps and links to original messages. Optionally specify a channel to summarize.
 
+Both commands support English and Traditional Chinese localization.
+
 ## Google Vertex AI Integration
 
 The bot uses Google's Vertex AI API with Gemini models for text summarization. Key features:
@@ -94,6 +98,7 @@ The project uses:
 - discord.py 2.3.2
 - Kink for dependency injection
 - Google Cloud Vertex AI
+- pytz for timezone handling
 - Poetry for dependency management
 
 ### Key Components
@@ -101,10 +106,11 @@ The project uses:
 - `main.py` - Entry point that initializes and runs the bot
 - `bootstrap.py` - Environment configuration and dependency injection setup
 - `bot_client.py` - Main Discord bot implementation with command handling
+- `translator.py` - Handles multi-language support for bot commands
 - `user_tracking/` - Strategies for tracking users in channels
   - `user_tracking_strategy.py` - Base strategy interface
-  - `pinned_message_emoji_tracker.py` - Tracks users via pinned message reactions
   - `role_based_tracker.py` - Tracks users based on their roles
+  - `pinned_message_emoji_tracker.py` - Tracks users via pinned message reactions
   - `user_tracking_manager.py` - Manages multiple tracking strategies
 - `summarize.py` - Provides different summarization strategies
 - `google_vertex.py` - Integration with Google Vertex AI
